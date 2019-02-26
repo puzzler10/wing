@@ -1,3 +1,5 @@
+import pandas as pd 
+
 def da(df, nrow = 100):
     """Display all columns in a pandas DataFrame.
     nrow: the number of rows to show"""

@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt, pandas as pd, numpy as np
+
 def set_plot_text_size(sml, med, big):
     """sml, med, big: text size of the small, medium and large text"""
     plt.rc('font', size=sml)          # controls default text sizes
@@ -9,42 +11,41 @@ def set_plot_text_size(sml, med, big):
     plt.rc('figure', titlesize=big)   # fontsize of the figure title
     
     
-def plot_AvsEPred(target, pred, groups = 20, sample=True, model_name = "", save_plot = False, save_path = "", n_sample=20000):
+def plot_AvsEPred(y_true, y_pred, groups = 20, sample=True, model_name = "", save_plot = False, save_path = "", n_sample=20000):
     """
     Plot actuals vs expected values for a classifier. Useful for seeing model bias. 
-    target: true y values, labels. Must be numeric 
-    pred: predictions for y values. If for binary prediction, use the probability of the 1 class
+    y_true: true y values, labels. Must be numeric 
+    y_pred: y_predictions for y values. If for binary y_prediction, use the probability of the 1 class
     groups: how many bins to split values into? e.g. 20 will bin values every 5%, 100 will bin values every 1%
     """
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    import numpy as np
-    if type(target) == pd.Series: target = target.values
-    if type(pred) == pd.Series:     pred = pred.values
-    tmp_df = pd.DataFrame({'target': target, 'pred': pred})
+    if n_sample > len(y_true): n_sample = len(y_true) 
+    if len(y_true) != len(y_pred): raise ValueError("y_true and y_pred must be the same length")
+    if type(y_true) == pd.Series: y_true = y_true.values
+    if type(y_pred) == pd.Series:     y_pred = y_pred.values
+    tmp_df = pd.DataFrame({'y_true': y_true, 'y_pred': y_pred})
     if sample:   tmp_df = tmp_df.sample(n_sample, random_state = 10).copy()  # useful for speed 
-    target_ord = tmp_df.sort_values('pred', ascending=True)['target']
-    pred_ord   = tmp_df.sort_values('pred', ascending=True)['pred']
-    
-    percentile_size = len(target_ord)/groups
-    rank = np.linspace(1, len(target_ord), len(target_ord))
+    y_true_ord = tmp_df.sort_values('y_pred', ascending=True)['y_true']
+    y_pred_ord   = tmp_df.sort_values('y_pred', ascending=True)['y_pred']
+ 
+    percentile_size = len(y_true_ord)/groups
+    rank = np.linspace(1, len(y_true_ord), len(y_true_ord))
     perc_bands = np.ceil(rank/percentile_size)/groups
     
-    target_avg = np.array(target_ord.groupby(perc_bands).mean())
-    pred_avg = np.array(pred_ord.groupby(perc_bands).mean())
+    y_true_avg = np.array(y_true_ord.groupby(perc_bands).mean())
+    y_pred_avg = np.array(y_pred_ord.groupby(perc_bands).mean())
     x_axis = np.unique(perc_bands)
     
     ## Make plot 
     plt.subplots()
-    t, = plt.plot(x_axis, target_avg, '-', color = 'blue', linewidth = 2, label = "t")
-    p, = plt.plot(x_axis, pred_avg, '-', color = 'green', linewidth = 2, label = "p")
-    plt.xlabel("Predicted band", fontsize = 12)
-    plt.ylabel("Target", fontsize = 12)
-    plt.title(("Actual vs predicted by predicted band\nModel: " + str(model_name)), fontsize = 14)
-    plt.legend([t, p], ["Actual", "Predicted"], fontsize = 12)
+    t, = plt.plot(x_axis, y_true_avg, '-', color = 'blue', linewidth = 2, label = "t")
+    p, = plt.plot(x_axis, y_pred_avg, '-', color = 'green', linewidth = 2, label = "p")
+    plt.xlabel("y_predicted band", fontsize = 12)
+    plt.ylabel("y_true", fontsize = 12)
+    plt.title(("Actual vs y_predicted by y_predicted band\nModel: " + str(model_name)), fontsize = 14)
+    plt.legend([t, p], ["Actual", "y_predicted"], fontsize = 12)
     if save_plot:
-        if save_path is "":    plt.savefig(            "plot_AvsEPred_" + str(model_name) + ".png")
-        else:                  plt.savefig(save_path + "plot_AvsEPred_" + str(model_name) + ".png")
+        if save_path is "":    plt.savefig(            "plot_AvsEy_pred_" + str(model_name) + ".png")
+        else:                  plt.savefig(save_path + "plot_AvsEy_pred_" + str(model_name) + ".png")
         
 
         
@@ -52,7 +53,8 @@ def plot_gains(y_true, y_pred, sample=True, positive_target_only = False, n_samp
     """ 
     A gains/lift plot. 
     Set sample to True for a faster plot. Uses sample of the series to make the prediction"""
-    import matplotlib.pyplot as plt
+    if n_sample > len(y_true): n_sample = len(y_true) 
+    if len(y_true) != len(y_pred): raise ValueError("y_true and y_pred must be the same length")
     if type(y_true) == pd.Series:     y_true = y_true.values
     if type(y_pred) == pd.Series:     y_pred = y_pred.values
     if positive_target_only: y_true, y_pred = y_pred[y_true > 0], y_true[y_true > 0]

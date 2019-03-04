@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="wing",
-    version="0.0.4",
+    version="0.0.5",
     author="Tom Roth",
     author_email="tom.roth@live.com.au",
     description="Utility functions for data science",
@@ -18,4 +18,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=['pdpbox', 'numpy', 'pandas', 'seaborn', 'sklearn', 'scipy' ],
 )

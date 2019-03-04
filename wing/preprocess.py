@@ -1,3 +1,7 @@
+import pandas as pd, numpy as np
+import re 
+from pandas.api.types import is_numeric_dtype
+
 def train_cats(df):
     """
     Change any columns of strings in a pandas dataframe to a column of
@@ -65,8 +69,8 @@ def add_datepart(df, fldname, drop=True, time=False, errors="raise"):
     attr = ['Year', 'Month', 'Week', 'Day', 'Dayofweek', 'Dayofyear', 'Quarter',
             'Is_month_end', 'Is_month_start', 'Is_quarter_end', 'Is_quarter_start', 'Is_year_end', 'Is_year_start']
     if time: attr = attr + ['Hour', 'Minute', 'Second']
-    for n in attr: df[targ_pre + n] = getattr(fld.dt, n.lower())
-    df[targ_pre + 'Elapsed'] = fld.astype(np.int64) // 10 ** 9
+    for n in attr: df[targ_pre + "_" + n] = getattr(fld.dt, n.lower())
+    df[targ_pre + "_" + 'Elapsed'] = fld.astype(np.int64) // 10 ** 9
     if drop: df.drop(fldname, axis=1, inplace=True)
     
     
@@ -121,7 +125,6 @@ def fix_missing(df, col, name, na_dict):
     1   500    2    True
     2     3    2   False
     """
-    from pandas.api.types import is_numeric_dtype
     if is_numeric_dtype(col):
         if pd.isnull(col).sum() or (name in na_dict):
             df[name+'_na'] = pd.isnull(col)
@@ -166,7 +169,6 @@ def numericalize(df, col, name, max_n_cat):
     1     2    b    2
     2     3    a    1
     """
-    from pandas.api.types import is_numeric_dtype
     if not is_numeric_dtype(col) and (max_n_cat is None or len(col.cat.categories) > max_n_cat):
         df[name] = col.cat.codes + 1
         
@@ -239,8 +241,6 @@ def proc_df(df, y_fld=None, skip_flds=None, ignore_flds=None, do_scale=False, na
     1.0  0.0  0.0   1.04
     0.0  0.0  1.0   0.21
     """
-    from pandas.api.types import is_numeric_dtype
-    
     if not ignore_flds: ignore_flds=[]
     if not skip_flds: skip_flds=[]
     if subset: df = get_sample(df,subset)

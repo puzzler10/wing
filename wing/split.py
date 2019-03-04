@@ -1,5 +1,11 @@
+import pandas as pd, numpy as np, seaborn as sns 
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import log_loss
+
 def split_dataset_with_sample(df_model, shuf, n_rows_sample, 
-                              frac_train=0.7, frac_valid=0.15, df_keys=None): 
+                              frac_train=0.7, frac_valid=0.15, df_keys=None, seed=22): 
     """Splits out dataset into train, test and valid sets. The test set will have 
     (1-frac_train - frac_valid)*100% of the data. 
     This function takes samples of the data first. Total number of rows 
@@ -11,6 +17,7 @@ def split_dataset_with_sample(df_model, shuf, n_rows_sample,
     frac_valid: percentage of rows to have in validation set 
     df_keys: has date info used in shuf =False
     """
+    np.random.seed(seed)
     # Take sample from dataframe 
     if shuf: 
         samp_model = sample_df(df_model, n_rows_sample, shuffle=True) # Get sample 
@@ -32,9 +39,9 @@ def split_dataset_with_sample(df_model, shuf, n_rows_sample,
  
  
  
- def split_X_y(train,valid,test,y_col):
+def split_X_y(train,valid,test,y_col):
     """get X,y train,test,valid"""
-    def split(df, y_col): return df.drop(y_col, axis=1), df.loc[:,y_col]
+    def split(df, y_col):  return (df.drop(y_col, axis=1), df.loc[:,y_col])
     X_train,y_train = split(train,y_col)
     X_valid,y_valid = split(valid,y_col)
     X_test, y_test  = split(test,y_col)
@@ -44,14 +51,10 @@ def split_dataset_with_sample(df_model, shuf, n_rows_sample,
 def get_test_valid_model_score(model_name, X_train, y_train, X_valid, y_valid, X_test, y_test, 
                          model_type='bin'):
     """ Gets log-loss of validation and test sets for a given classification algorithm model_name."""
-    from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-    from sklearn.tree import DecisionTreeClassifier
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.metrics import log_loss
     model_type = 'bin'
     model_name = "rf_deep"
     if model_name == "rf_deep": 
-        m = RandomForestClassifier(n_estimators = 70, max_features = 'sqrt', n_jobs = -1, 
+        m = RandomForestClassifier(n_estimators = 50, max_features = 'sqrt', n_jobs = -1, 
                                   class_weight='balanced', min_samples_leaf=3)
     elif model_name == "rf_shallow":
         m = RandomForestClassifier(n_estimators = 30, max_features = 'auto', 
@@ -72,7 +75,6 @@ def plot_test_valid_set_performance(X_train, y_train, X_valid, y_valid, X_test, 
     """Compares performance (log-loss) of the valid and test sets for a number of classifiers. 
     This graph should be a straight line. If it isn't, it indicates that the validation 
     set is not representative of the test set."""
-    import seaborn as sns 
     model_names = ['rf_deep', 'rf_shallow', 'l1_logreg', 
                    'l2_logreg','noReg_logreg', 'decision_tree']
     def empty_col(): return [None for o in range(len(model_names))]
@@ -88,7 +90,7 @@ def plot_test_valid_set_performance(X_train, y_train, X_valid, y_valid, X_test, 
     
 def create_train_valid_test(df, frac_train=0.7, frac_valid=0.15,
                             temporal=False, date_col=None, shuffle=False,
-                            drop_date=False, drop_other_cols=[]):
+                            drop_date=False, drop_other_cols=[], seed=22):
     """ Generates train, validation and test sets for data. Handles data with temporal components. 
     The test set will have (1 - frac_train - frac_valid) as a fraction of df 
     
@@ -101,6 +103,7 @@ def create_train_valid_test(df, frac_train=0.7, frac_valid=0.15,
     drop_date: drop the date column in the results or not 
     drop_other_cols: list with column names to drop 
     """
+    np.random.seed(seed)
     if temporal and shuffle:      print("Shuffle = True is ignored for temporal data")
     if temporal and not date_col: raise ValueError("Need to pass in a value for date_col if temporal=True")
     if not temporal and date_col: print("Parameter for date_col ignored if temporal=False")
@@ -168,7 +171,4 @@ def sample_df(df, n_rows, temporal=False, date_col=None, shuffle=False, seed=22)
             else:                          samp = df[:n_rows]
     return samp.copy()
 
-
-
-    
   

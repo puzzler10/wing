@@ -1,3 +1,5 @@
+import pandas as pd 
+
 def analyse_cv_results(searcher_result):
     """
     Returns best estimator, dataframe with cv results, and std of results over each variable.

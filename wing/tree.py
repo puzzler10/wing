@@ -1,6 +1,14 @@
+import re, pandas as pd, numpy as np, matplotlib.pyplot as plt 
+from sklearn.tree import export_graphviz
+from sklearn.ensemble import forest
+from scipy.cluster import hierarchy as hc
+from concurrent.futures import ProcessPoolExecutor
+from pdpbox import pdp
+
 def draw_tree(t, df, size=10, ratio=0.6, precision=3, out_format='svg', out_path = './tree'):
     """ Draws a representation of a decision tree in IPython.
     # run in terminal first if on windows: conda install python-graphviz
+    # todo: fix the terminal thing 
     Parameters:
     -----------
     t: The tree you wish to draw (a DecisionTreeRegressor, or  m.estimators_[i] if m is a RandomForestRegressor  )
@@ -9,8 +17,6 @@ def draw_tree(t, df, size=10, ratio=0.6, precision=3, out_format='svg', out_path
     out_path: if out_format is "ps" or "png" or "svg", saves output at this location (don't put extension at end)
     out_file: set to None to print to console, set to "xxx.dot" to save dot file as xxx.dot
     """
-    import re 
-    from sklearn.tree import export_graphviz
     s=export_graphviz(t, out_file=None, feature_names=df.columns, filled=True,
                       special_characters=True, rotate=True, precision=precision)
     s = re.sub('Tree {', f'Tree {{ size={size}; ratio={ratio}', s)
@@ -18,7 +24,7 @@ def draw_tree(t, df, size=10, ratio=0.6, precision=3, out_format='svg', out_path
         with open("tree.dot", "w") as text_file: text_file.write(s)
         command = f'dot -T{out_format} -Kneato -Goverlap=False tree.dot -o {out_path + "." + out_format}'
         print(command)
-        !{command}
+      #  !{command}
         os.remove('tree.dot')
     elif out_format == 'inline': 
         if out_path is not None: print("out_path ignored if out_format == 'inline'")
@@ -29,8 +35,6 @@ def draw_tree(t, df, size=10, ratio=0.6, precision=3, out_format='svg', out_path
         
 def plot_dendogram(df):
     """Dendogram to identify highly similar features in a dataframe """
-    from scipy.cluster import hierarchy as hc
-    import matplotlib.pyplot as plt 
     corr = np.round(scipy.stats.spearmanr(df).correlation, 4)
     corr_condensed = hc.distance.squareform(1-corr)
     z = hc.linkage(corr_condensed, method='average')
@@ -39,7 +43,7 @@ def plot_dendogram(df):
     plt.show()
    
    
- def parallel_trees(m, fn, n_jobs=4):
+def parallel_trees(m, fn, n_jobs=4):
     """# Linux only, or windows with python script and if name == __main__ shit
     
     ### use like below (for m being a rf model)
@@ -49,7 +53,6 @@ def plot_dendogram(df):
         %time preds = np.stack(parallel_trees(m, get_preds))
         np.mean(preds[:,0]), np.std(preds[:,0])
     """
-    from concurrent.futures import ProcessPoolExecutor
     return list(ProcessPoolExecutor(n_jobs).map(fn, m.estimators_))
 
 
@@ -72,7 +75,6 @@ def plot_pdp(feat, clusters=None, feat_name=None):
     # for 1-hot encoded columns 
     plot_pdp(['Enclosure_EROPS w AC', 'Enclosure_EROPS', 'Enclosure_OROPS'], 5, 'Enclosure')
     """
-    from pdpbox import pdp
     feat_name = feat_name or feat
     p = pdp.pdp_isolate(m, df, df.columns, feat)
     return pdp.pdp_plot(p, feat_name, plot_lines=True,
@@ -99,14 +101,12 @@ def set_rf_samples(n):
     n random rows. 
     Set oob_error in RandomForestRegressor to False if using this. 
     """
-    from sklearn.ensemble import forest
     forest._generate_sample_indices = (lambda rs, n_samples:
         forest.check_random_state(rs).randint(0, n_samples, n))
 
 def reset_rf_samples():
     """ Undoes the changes produced by set_rf_samples.
     """
-    from sklearn.ensemble import forest
     forest._generate_sample_indices = (lambda rs, n_samples:
         forest.check_random_state(rs).randint(0, n_samples, n_samples))
 

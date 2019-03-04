@@ -1,0 +1,6 @@
+Fix up the shell process in draw_tree 
+Add testing scaffold 
+Redo split_dataset_with_sample with better date control
+investigate the pbr package 
+update readme
+investigate this_tests() in fastai 

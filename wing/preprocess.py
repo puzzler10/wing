@@ -135,7 +135,7 @@ def fix_missing(df, col, name, na_dict):
     
     
 def numericalize(df, col, name, max_n_cat):
-    """ Changes the column col from a categorical type to its integer codes.
+    """ Changes the column col from a    type to its integer codes.
     Missing values are denoted by 0 (pandas normally denotes them by -1)
     Parameters:
     -----------
